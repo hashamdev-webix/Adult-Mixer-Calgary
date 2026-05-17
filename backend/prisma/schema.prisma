@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum Preference {
+  MALE
+  FEMALE
+  EVERYONE
+}
+
+model User {
+  id              String      @id @default(uuid())
+  email           String      @unique
+  password        String
+  role            Role        @default(USER)
+  emailVerified   Boolean     @default(false)
+
+  firstName       String
+  lastName        String?
+  bio             String?
+  birthDate       DateTime
+  gender          Gender
+  preference      Preference  @default(EVERYONE)
+  profileImageUrl String?
+
+  isOnline        Boolean     @default(false)
+  lastSeenAt      DateTime?
+
+  isBlocked       Boolean     @default(false)
+  deletedAt       DateTime?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  givenLikes      Like[]      @relation("GivenLikes")
+  receivedLikes   Like[]      @relation("ReceivedLikes")
+  matchesAsUser1  Match[]     @relation("MatchUser1")
+  matchesAsUser2  Match[]     @relation("MatchUser2")
+  sentMessages    Message[]   @relation("SentMessages")
+
+  @@index([email])
+  @@index([gender])
+  @@index([preference])
+  @@index([deletedAt])
+}
+
+model Like {
+  id         String   @id @default(uuid())
+  fromUserId String
+  toUserId   String
+  createdAt  DateTime @default(now())
+
+  fromUser User @relation("GivenLikes", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User @relation("ReceivedLikes", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([fromUserId, toUserId])
+  @@index([toUserId])
+}
+
+model Match {
+  id        String   @id @default(uuid())
+  user1Id   String
+  user2Id   String
+  createdAt DateTime @default(now())
+
+  user1    User      @relation("MatchUser1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2    User      @relation("MatchUser2", fields: [user2Id], references: [id], onDelete: Cascade)
+  messages Message[] @relation("MatchMessages")
+
+  @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  matchId   String
+  senderId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  match  Match @relation("MatchMessages", fields: [matchId], references: [id], onDelete: Cascade)
+  sender User  @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([expiresAt])
+}

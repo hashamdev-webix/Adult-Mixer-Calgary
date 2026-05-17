@@ -1,33 +1,14 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
+  "experiments": {
+    "services": {
+      "frontend": {
+        "rootDirectory": "/",
+        "framework": "vite"
       }
-    },
-    {
-      "src": "api/index.ts",
-      "use": "@vercel/node"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/health",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
+  },
+  "backend": {
+    "entrypoint": "backend",
+    "localPort": "/backend"
   }
 }
